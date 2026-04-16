@@ -1,7 +1,406 @@
-🏕️ [캠핑장 이름]
-📅 일정: 2026-04-18 ~ 2026-04-19
-👥 인원: 4인
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1a3a2a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="캠핑파인더">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<title>캠핑 파인더 🏕️</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Black+Han+Sans&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --forest: #1a3a2a; --moss: #2d5a3d; --fern: #4a8c5c;
+    --sage: #7ab893; --mist: #b8d4c0; --cream: #f5f0e8;
+    --ember: #d46b35; --gold: #c9973a; --smoke: #8a9e8f;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Noto Sans KR',sans-serif; background:var(--forest); color:var(--cream); min-height:100dvh; overflow-x:hidden; }
+  body::before {
+    content:''; position:fixed; inset:0;
+    background-image: radial-gradient(ellipse at 20% 50%,rgba(74,140,92,.15) 0%,transparent 60%), radial-gradient(ellipse at 80% 20%,rgba(45,90,61,.2) 0%,transparent 50%);
+    pointer-events:none; z-index:0;
+  }
+  #installBanner {
+    position:fixed; bottom:0; left:0; right:0;
+    background:linear-gradient(135deg,var(--moss),var(--forest));
+    border-top:1px solid rgba(122,184,147,.3); padding:16px 20px;
+    z-index:200; display:none; align-items:center; gap:14px; box-shadow:0 -8px 32px rgba(0,0,0,.4);
+  }
+  #installBanner.show{display:flex;}
+  #installBanner img{width:44px;height:44px;border-radius:10px;}
+  #installBanner .banner-text{flex:1;}
+  #installBanner .banner-text strong{display:block;font-size:14px;margin-bottom:2px;}
+  #installBanner .banner-text span{font-size:11px;color:var(--sage);}
+  #installBtn{background:linear-gradient(135deg,var(--fern),var(--moss));border:none;border-radius:10px;color:white;cursor:pointer;font-family:'Noto Sans KR',sans-serif;font-size:13px;font-weight:700;padding:10px 16px;white-space:nowrap;}
+  #dismissBanner{background:none;border:none;color:var(--smoke);cursor:pointer;font-size:18px;padding:4px;}
+  .container{position:relative;z-index:1;max-width:800px;margin:0 auto;padding:0 16px 100px;}
+  header{padding:40px 0 28px;text-align:center;}
+  .header-icon{font-size:48px;margin-bottom:12px;display:block;animation:float 3s ease-in-out infinite;}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+  header h1{font-family:'Black Han Sans',sans-serif;font-size:36px;letter-spacing:-1px;background:linear-gradient(135deg,var(--mist),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px;}
+  header p{color:var(--sage);font-size:13px;font-weight:300;letter-spacing:1px;}
+  .update-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(45,90,61,.4);border:1px solid rgba(122,184,147,.2);border-radius:20px;color:var(--smoke);font-size:11px;padding:4px 12px;margin-top:8px;}
+  .update-badge span{color:var(--sage);}
+  .search-card{background:rgba(45,90,61,.3);border:1px solid rgba(122,184,147,.2);border-radius:20px;padding:24px;margin-bottom:24px;backdrop-filter:blur(10px);}
+  .search-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+  .field-group{display:flex;flex-direction:column;gap:6px;}
+  .field-group.full{grid-column:1/-1;}
+  label{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--sage);}
+  select,input[type="date"]{background:rgba(26,58,42,.8);border:1px solid rgba(122,184,147,.25);border-radius:10px;color:var(--cream);font-family:'Noto Sans KR',sans-serif;font-size:14px;padding:10px 14px;width:100%;appearance:none;-webkit-appearance:none;transition:border-color .2s,box-shadow .2s;}
+  select:focus,input:focus{outline:none;border-color:var(--sage);box-shadow:0 0 0 3px rgba(122,184,147,.15);}
+  select option{background:var(--forest);color:var(--cream);}
+  .date-range{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;grid-column:1/-1;}
+  .date-range span{text-align:center;color:var(--smoke);font-size:12px;}
+  .search-btn{width:100%;background:linear-gradient(135deg,var(--fern),var(--moss));border:none;border-radius:12px;color:var(--cream);font-family:'Black Han Sans',sans-serif;font-size:16px;letter-spacing:2px;padding:14px;cursor:pointer;transition:transform .15s;}
+  .search-btn:active{transform:scale(.98);}
+  .filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+  .filter-tag{background:rgba(26,58,42,.6);border:1px solid rgba(122,184,147,.2);border-radius:20px;color:var(--mist);cursor:pointer;font-size:12px;padding:5px 12px;transition:all .2s;font-family:'Noto Sans KR',sans-serif;}
+  .filter-tag.active,.filter-tag:hover{background:var(--fern);border-color:var(--fern);color:white;}
+  .results-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .results-count{font-size:13px;color:var(--sage);}
+  .results-count strong{color:var(--gold);font-family:'Black Han Sans',sans-serif;font-size:18px;}
+  .loading{text-align:center;padding:60px 20px;display:none;}
+  .loading.show{display:block;}
+  .tent-loader{font-size:40px;animation:bounce .8s ease-in-out infinite alternate;display:block;margin-bottom:16px;}
+  @keyframes bounce{from{transform:translateY(0) scale(1)}to{transform:translateY(-12px) scale(1.05)}}
+  .loading p{color:var(--sage);font-size:13px;animation:pulse 1.5s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+  .camp-grid{display:flex;flex-direction:column;gap:14px;}
+  .camp-card{background:rgba(45,90,61,.25);border:1px solid rgba(122,184,147,.15);border-radius:16px;padding:18px;transition:transform .2s,border-color .2s,box-shadow .2s;animation:slideIn .3s ease forwards;opacity:0;transform:translateY(16px);}
+  @keyframes slideIn{to{opacity:1;transform:translateY(0)}}
+  .camp-card:hover{border-color:rgba(122,184,147,.4);box-shadow:0 8px 32px rgba(0,0,0,.3);transform:translateY(-2px);}
+  .camp-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:10px;}
+  .camp-name{font-family:'Black Han Sans',sans-serif;font-size:17px;color:var(--cream);letter-spacing:-.5px;line-height:1.3;flex:1;}
+  .camp-type-badge{background:rgba(201,151,58,.2);border:1px solid rgba(201,151,58,.4);border-radius:6px;color:var(--gold);font-size:10px;font-weight:700;letter-spacing:.5px;padding:3px 8px;white-space:nowrap;flex-shrink:0;}
+  .camp-location{color:var(--sage);font-size:12px;margin-bottom:10px;}
+  .camp-intro{color:var(--mist);font-size:12px;line-height:1.6;margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;opacity:.8;}
+  .facilities{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
+  .fac-tag{background:rgba(26,58,42,.6);border-radius:6px;color:var(--mist);font-size:11px;padding:3px 8px;}
+  .fac-tag.highlight{background:rgba(74,140,92,.3);color:var(--sage);}
+  .camp-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .btn-detail,.btn-reserve{border-radius:10px;border:none;cursor:pointer;font-family:'Noto Sans KR',sans-serif;font-size:12px;font-weight:700;padding:9px;transition:all .2s;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:4px;}
+  .btn-detail{background:rgba(122,184,147,.15);border:1px solid rgba(122,184,147,.3);color:var(--sage);}
+  .btn-reserve{background:linear-gradient(135deg,var(--ember),#b85a2a);color:white;}
+  .empty-state{text-align:center;padding:60px 20px;display:none;}
+  .empty-state.show{display:block;}
+  .empty-state .icon{font-size:48px;margin-bottom:16px;}
+  .empty-state p{color:var(--smoke);font-size:14px;}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:none;align-items:flex-end;backdrop-filter:blur(4px);}
+  .modal-overlay.show{display:flex;animation:fadeIn .2s ease;}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:var(--forest);border:1px solid rgba(122,184,147,.2);border-radius:24px 24px 0 0;width:100%;max-height:80vh;overflow-y:auto;padding:24px;animation:slideUp .3s ease;position:relative;}
+  @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  .modal-handle{width:40px;height:4px;background:rgba(122,184,147,.3);border-radius:2px;margin:0 auto 20px;}
+  .modal-title{font-family:'Black Han Sans',sans-serif;font-size:22px;margin-bottom:6px;}
+  .modal-subtitle{color:var(--sage);font-size:13px;margin-bottom:20px;}
+  .modal-section{margin-bottom:18px;}
+  .modal-section-title{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);margin-bottom:8px;}
+  .modal-text{color:var(--mist);font-size:13px;line-height:1.7;}
+  .modal-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .modal-info-item{background:rgba(45,90,61,.3);border-radius:10px;padding:12px;}
+  .modal-info-label{color:var(--smoke);font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;}
+  .modal-info-value{color:var(--cream);font-size:13px;font-weight:500;}
+  .modal-close{position:absolute;top:16px;right:20px;background:rgba(122,184,147,.15);border:none;border-radius:50%;color:var(--sage);cursor:pointer;font-size:18px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;}
+  .modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px;}
+  .modal-btn{border-radius:12px;border:none;cursor:pointer;font-family:'Noto Sans KR',sans-serif;font-size:14px;font-weight:700;padding:14px;transition:all .2s;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;}
+  .modal-btn.secondary{background:rgba(122,184,147,.15);border:1px solid rgba(122,184,147,.3);color:var(--sage);}
+  .modal-btn.primary{background:linear-gradient(135deg,var(--ember),#b85a2a);color:white;}
+  .load-more{width:100%;background:transparent;border:1px solid rgba(122,184,147,.3);border-radius:12px;color:var(--sage);cursor:pointer;font-family:'Noto Sans KR',sans-serif;font-size:13px;padding:14px;margin-top:16px;transition:all .2s;display:none;}
+  .load-more.show{display:block;}
+  .error-msg{background:rgba(212,107,53,.15);border:1px solid rgba(212,107,53,.3);border-radius:12px;color:#e8a07a;font-size:13px;padding:14px 16px;text-align:center;display:none;margin-bottom:16px;}
+  .error-msg.show{display:block;}
+  @media(max-width:400px){header h1{font-size:28px;}.search-grid{grid-template-columns:1fr;}.date-range{grid-template-columns:1fr;}.date-range span{display:none;}}
+</style>
+</head>
+<body>
+<div id="installBanner">
+  <img src="./icon-192.png" alt="앱 아이콘">
+  <div class="banner-text"><strong>캠핑 파인더</strong><span>홈 화면에 추가하면 앱처럼 사용 가능!</span></div>
+  <button id="installBtn">설치</button>
+  <button id="dismissBanner">✕</button>
+</div>
+<div class="container">
+  <header>
+    <span class="header-icon">🏕️</span>
+    <h1>캠핑 파인더</h1>
+    <p>전국 캠핑장 검색 · 고캠핑 공공데이터</p>
+    <div class="update-badge">🔄 데이터 업데이트: <span id="updateDate">로딩 중...</span></div>
+  </header>
+  <div class="search-card">
+    <div class="search-grid">
+      <div class="field-group">
+        <label>📍 지역</label>
+        <select id="doNm">
+          <option value="">전국</option>
+          <option value="서울특별시">서울</option><option value="경기도">경기</option>
+          <option value="인천광역시">인천</option><option value="강원도">강원</option>
+          <option value="충청북도">충북</option><option value="충청남도">충남</option>
+          <option value="대전광역시">대전</option><option value="세종특별자치시">세종</option>
+          <option value="전라북도">전북</option><option value="전라남도">전남</option>
+          <option value="광주광역시">광주</option><option value="경상북도">경북</option>
+          <option value="경상남도">경남</option><option value="대구광역시">대구</option>
+          <option value="부산광역시">부산</option><option value="울산광역시">울산</option>
+          <option value="제주특별자치도">제주</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label>⛺ 유형</label>
+        <select id="induty">
+          <option value="">전체</option>
+          <option value="일반야영장">일반야영장</option>
+          <option value="자동차야영장">오토캠핑</option>
+          <option value="글램핑">글램핑</option>
+          <option value="카라반">카라반</option>
+        </select>
+      </div>
+      <div class="field-group full">
+        <label>📅 여행 일정</label>
+        <div class="date-range">
+          <input type="date" id="startDate">
+          <span>→</span>
+          <input type="date" id="endDate">
+        </div>
+      </div>
+      <div class="field-group">
+        <label>👥 인원</label>
+        <select id="people">
+          <option value="">인원 선택</option>
+          <option value="2">2인</option><option value="3">3인</option>
+          <option value="4">4인</option><option value="5">5인</option>
+          <option value="6">6인 이상</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label>🐾 반려동물</label>
+        <select id="pet">
+          <option value="">상관없음</option>
+          <option value="Y">동반 가능</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-bottom:14px;">
+      <label style="display:block;margin-bottom:8px;">✨ 원하는 시설</label>
+      <div class="filter-row">
+        <button class="filter-tag" data-key="sbrsCl" data-val="전기">⚡ 전기</button>
+        <button class="filter-tag" data-key="sbrsCl" data-val="온수">🚿 온수</button>
+        <button class="filter-tag" data-key="sbrsCl" data-val="무선인터넷">📶 와이파이</button>
+        <button class="filter-tag" data-key="sbrsCl" data-val="장작판매">🪵 장작</button>
+        <button class="filter-tag" data-key="extshrCl" data-val="물놀이장">💧 물놀이</button>
+        <button class="filter-tag" data-key="extshrCl" data-val="낚시">🎣 낚시</button>
+      </div>
+    </div>
+    <button class="search-btn" onclick="searchCamping()">🔍 캠핑장 검색</button>
+  </div>
+  <div class="error-msg" id="errorMsg"></div>
+  <div class="loading" id="loading"><span class="tent-loader">⛺</span><p>캠핑장을 찾고 있어요...</p></div>
+  <div id="resultsSection" style="display:none;">
+    <div class="results-header">
+      <div class="results-count"><strong id="totalCount">0</strong>개 캠핑장 발견</div>
+    </div>
+    <div class="camp-grid" id="campGrid"></div>
+    <button class="load-more" id="loadMoreBtn" onclick="loadMore()">더 많은 캠핑장 보기 ↓</button>
+  </div>
+  <div class="empty-state" id="emptyState">
+    <div class="icon">🌲</div>
+    <p>조건에 맞는 캠핑장을 찾지 못했어요.<br>조건을 바꿔서 다시 검색해 보세요.</p>
+  </div>
+</div>
+<!-- 예약 안내 모달 -->
+<div class="modal-overlay" id="reserveOverlay" onclick="if(event.target===this)closeReserve()">
+  <div class="modal" style="max-height:50vh;">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeReserve()">✕</button>
+    <div style="text-align:center;padding:10px 0 20px;">
+      <div style="font-size:36px;margin-bottom:12px;">🏕️</div>
+      <div class="modal-title" id="reserveCampName"></div>
+      <div style="margin:16px 0;background:rgba(45,90,61,.4);border-radius:12px;padding:14px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:0;">
+          <div class="modal-info-item">
+            <div class="modal-info-label">📅 일정</div>
+            <div class="modal-info-value" id="reserveDate" style="font-size:12px;"></div>
+          </div>
+          <div class="modal-info-item">
+            <div class="modal-info-label">👥 인원</div>
+            <div class="modal-info-value" id="reservePeople"></div>
+          </div>
+        </div>
+      </div>
+      <p style="color:var(--sage);font-size:12px;margin-bottom:16px;">고캠핑에서 실시간 예약 가능 여부를 확인하세요!</p>
+      <a id="reserveLink" href="#" target="_blank" onclick="closeReserve()" class="modal-btn primary" style="width:100%;justify-content:center;text-decoration:none;display:flex;">
+        🏕️ 고캠핑에서 예약 확인하기
+      </a>
+    </div>
+  </div>
+</div>
 
-고캠핑에서 실시간 예약 가능 여부를 확인하세요!
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModalDirect()">✕</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+<script>
+let campingData=[], allResults=[], displayedCount=0;
+const PAGE_SIZE=10;
 
-[🏕️ 고캠핑에서 예약 확인하기]
+if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;document.getElementById('installBanner').classList.add('show');});
+document.getElementById('installBtn').addEventListener('click',async()=>{if(!deferredPrompt)return;deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;document.getElementById('installBanner').classList.remove('show');});
+document.getElementById('dismissBanner').addEventListener('click',()=>document.getElementById('installBanner').classList.remove('show'));
+
+(function(){
+  const t=new Date(),t2=new Date();
+  t.setDate(t.getDate()+1);t2.setDate(t2.getDate()+2);
+  document.getElementById('startDate').value=t.toISOString().split('T')[0];
+  document.getElementById('endDate').value=t2.toISOString().split('T')[0];
+})();
+
+document.querySelectorAll('.filter-tag').forEach(btn=>btn.addEventListener('click',()=>btn.classList.toggle('active')));
+
+async function loadData(){
+  document.getElementById('loading').classList.add('show');
+  try{
+    const res=await fetch('./camping_data.json?v='+Date.now());
+    if(!res.ok) throw new Error('파일 없음');
+    const json=await res.json();
+    campingData=json.items||[];
+    document.getElementById('updateDate').textContent=json.updated||'-';
+    allResults=campingData; displayedCount=0;
+    document.getElementById('campGrid').innerHTML='';
+    document.getElementById('totalCount').textContent=campingData.length;
+    document.getElementById('resultsSection').style.display='block';
+    loadMore();
+  }catch(e){
+    const el=document.getElementById('errorMsg');
+    el.innerHTML='⚠️ 아직 데이터가 없어요!<br><br>GitHub 저장소에서 <b>Actions → Run workflow</b>를 눌러 데이터를 먼저 수집해 주세요.';
+    el.classList.add('show');
+  }finally{
+    document.getElementById('loading').classList.remove('show');
+  }
+}
+
+function searchCamping(){
+  const doNm=document.getElementById('doNm').value;
+  const induty=document.getElementById('induty').value;
+  const pet=document.getElementById('pet').value;
+  document.getElementById('emptyState').classList.remove('show');
+  document.getElementById('errorMsg').classList.remove('show');
+  let items=[...campingData];
+  if(doNm) items=items.filter(c=>c.doNm===doNm);
+  if(induty) items=items.filter(c=>c.induty&&c.induty.includes(induty));
+  if(pet==='Y') items=items.filter(c=>c.animalCmgCl&&c.animalCmgCl.includes('가능'));
+  document.querySelectorAll('.filter-tag.active').forEach(tag=>{
+    items=items.filter(c=>c[tag.dataset.key]&&c[tag.dataset.key].includes(tag.dataset.val));
+  });
+  allResults=items; displayedCount=0;
+  document.getElementById('campGrid').innerHTML='';
+  document.getElementById('totalCount').textContent=items.length;
+  if(items.length===0){document.getElementById('emptyState').classList.add('show');document.getElementById('resultsSection').style.display='none';}
+  else{document.getElementById('resultsSection').style.display='block';loadMore();}
+}
+
+function loadMore(){
+  const grid=document.getElementById('campGrid');
+  const slice=allResults.slice(displayedCount,displayedCount+PAGE_SIZE);
+  slice.forEach((camp,i)=>grid.appendChild(createCampCard(camp,displayedCount+i)));
+  displayedCount+=slice.length;
+  const btn=document.getElementById('loadMoreBtn');
+  if(displayedCount<allResults.length){btn.classList.add('show');btn.textContent=`더 보기 (${allResults.length-displayedCount}개 남음) ↓`;}
+  else btn.classList.remove('show');
+}
+
+function createCampCard(camp,index){
+  const card=document.createElement('div');
+  card.className='camp-card';
+  card.style.animationDelay=`${(index%PAGE_SIZE)*.05}s`;
+  const typeMap={'일반야영장':'🌿 일반','자동차야영장':'🚗 오토','글램핑':'✨ 글램핑','카라반':'🚐 카라반'};
+  const indutyList=camp.induty?camp.induty.split(','):[];
+  const typeBadge=typeMap[indutyList[0]?.trim()]||indutyList[0]||'캠핑';
+  const facItems=camp.sbrsCl?camp.sbrsCl.split(',').map(f=>f.trim()).filter(Boolean):[];
+  const facHTML=facItems.slice(0,5).map(f=>`<span class="fac-tag">${f}</span>`).join('');
+  const location=[camp.doNm,camp.sigunguNm].filter(Boolean).join(' ');
+  const intro=camp.lineIntro||camp.intro||'상세 정보를 확인해 주세요.';
+  card.innerHTML=`
+    <div class="camp-card-top"><div class="camp-name">${camp.facltNm||'캠핑장'}</div><span class="camp-type-badge">${typeBadge}</span></div>
+    <div class="camp-location">📍 ${location}</div>
+    <div class="camp-intro">${intro}</div>
+    <div class="facilities">${facHTML}</div>
+    <div class="camp-actions">
+      <button class="btn-detail" onclick="showDetail(${index})">📋 상세보기</button>
+      <button class="btn-reserve" onclick="goReserve(event,'${camp.facltNm||''}')">🏕️ 예약하기</button>
+    </div>`;
+  return card;
+}
+
+function showDetail(index){
+  const camp=allResults[index];
+  if(!camp)return;
+  const infoItems=[
+    {label:'지역',value:[camp.doNm,camp.sigunguNm].filter(Boolean).join(' ')||'-'},
+    {label:'유형',value:camp.induty||'-'},{label:'반려동물',value:camp.animalCmgCl||'-'},
+    {label:'전화번호',value:camp.tel||'-'},{label:'일반사이트',value:camp.gnrlSiteCo?camp.gnrlSiteCo+'면':'-'},
+    {label:'오토사이트',value:camp.autoSiteCo?camp.autoSiteCo+'면':'-'},
+    {label:'글램핑',value:camp.glampSiteCo?camp.glampSiteCo+'면':'-'},{label:'카라반',value:camp.caravSiteCo?camp.caravSiteCo+'면':'-'},
+  ];
+  const infoHTML=infoItems.map(i=>`<div class="modal-info-item"><div class="modal-info-label">${i.label}</div><div class="modal-info-value">${i.value}</div></div>`).join('');
+  const facList=camp.sbrsCl?camp.sbrsCl.split(',').map(f=>`<span class="fac-tag highlight">${f.trim()}</span>`).join(''):'-';
+  const extList=camp.extshrCl?camp.extshrCl.split(',').map(f=>`<span class="fac-tag">${f.trim()}</span>`).join(''):'-';
+  const mapLink=camp.mapX&&camp.mapY?`https://map.kakao.com/link/map/${encodeURIComponent(camp.facltNm||'')},${camp.mapY},${camp.mapX}`:`https://map.kakao.com/link/search/${encodeURIComponent(camp.facltNm||'')}`;
+  document.getElementById('modalContent').innerHTML=`
+    <div class="modal-title">${camp.facltNm||'캠핑장'}</div>
+    <div class="modal-subtitle">📍 ${camp.addr1||'-'}</div>
+    <div class="modal-section"><div class="modal-section-title">소개</div><div class="modal-text">${camp.intro||camp.lineIntro||'소개 정보가 없습니다.'}</div></div>
+    <div class="modal-section"><div class="modal-section-title">기본 정보</div><div class="modal-info-grid">${infoHTML}</div></div>
+    <div class="modal-section"><div class="modal-section-title">편의 시설</div><div class="facilities">${facList}</div></div>
+    <div class="modal-section"><div class="modal-section-title">주변 시설</div><div class="facilities">${extList}</div></div>
+    <div class="modal-actions">
+      <a class="modal-btn secondary" href="${mapLink}" target="_blank">🗺️ 지도보기</a>
+      <button class="modal-btn primary" onclick="goReserve(event,'${camp.facltNm||''}')">🏕️ 예약하기</button>
+    </div>`;
+  document.getElementById('modalOverlay').classList.add('show');
+  document.body.style.overflow='hidden';
+}
+function goReserve(e, name) {
+  e.preventDefault();
+  const startDate = document.getElementById('startDate').value;
+  const endDate = document.getElementById('endDate').value;
+  const people = document.getElementById('people').value;
+
+  // 날짜 포맷 변환 (YYYY-MM-DD → YYYYMMDD)
+  const arrDate = startDate ? startDate.replace(/-/g,'') : '';
+  const deptDate = endDate ? endDate.replace(/-/g,'') : '';
+
+  // 고캠핑 검색 URL (캠핑장명 + 날짜)
+  let url = `https://www.gocamping.or.kr/uni/search/searchResults.do?searchText=${encodeURIComponent(name)}`;
+  if (arrDate) url += `&arrivalDate=${arrDate}`;
+  if (deptDate) url += `&departureDate=${deptDate}`;
+
+  // 예약 안내 팝업
+  const overlay = document.getElementById('reserveOverlay');
+  document.getElementById('reserveCampName').textContent = name;
+  document.getElementById('reserveDate').textContent = startDate && endDate ? `${startDate} ~ ${endDate}` : '날짜 미선택';
+  document.getElementById('reservePeople').textContent = people ? `${people}인` : '미선택';
+  document.getElementById('reserveLink').href = url;
+  overlay.classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeReserve() {
+  document.getElementById('reserveOverlay').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+function closeModal(e){if(e.target===document.getElementById('modalOverlay'))closeModalDirect();}
+function closeModalDirect(){document.getElementById('modalOverlay').classList.remove('show');document.body.style.overflow='';}
+window.addEventListener('load',loadData);
+</script>
+</body>
+</html>
